@@ -4,9 +4,10 @@ import {
   type ASTNode,
   type ASTResult,
 } from "src/toastmark/ast";
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce, reconcile } from "solid-js/store";
 import type { Pos } from "src/toastmark/types/node";
 import { ASTNodeRenderer } from "./components/ASTRenderers";
+import { batch } from "solid-js";
 
 // Helper function to compare nodes recursively
 const areNodesEqual = (node1: ASTNode, node2: ASTNode): boolean => {
@@ -36,86 +37,38 @@ const createIncrementalParser = (initialMarkdown = "") => {
   });
 
   const updateDoc = (astResults: ASTResult[]) => {
-    setDoc(
-      produce((doc) => {
-        for (const result of astResults) {
-          // Handle removed nodes
-          if (result.removedRange) {
-            const [startId, endId] = result.removedRange.id;
-            const startIndex = doc.children.findIndex(
-              (child) => child.id === startId,
-            );
-            const endIndex = doc.children.findIndex(
-              (child) => child.id === endId,
-            );
+    batch(() => {
+      // console.log(astResults);
+      for (const result of astResults) {
+        const [start, end] = result.removedRange?.id || [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
-            if (startIndex !== -1 && endIndex !== -1) {
-              // Instead of removing all nodes, compare and only remove changed ones
-              const removedNodes = doc.children.slice(startIndex, endIndex + 1);
-              const addedNodes = result.addedNodes;
-
-              // Create a map of content-based keys to help match similar nodes
-              const removedMap = new Map(
-                removedNodes.map(node => [JSON.stringify({ type: node.type, literal: node.literal }), node])
-              );
-
-              // Keep track of which nodes to actually remove
-              const nodesToRemove: number[] = [];
-
-              // For each added node, check if we can reuse an existing node's content
-              for (let i = 0; i < addedNodes.length; i++) {
-                const addedNode = addedNodes[i];
-                if (!addedNode) continue;
-
-                const key = JSON.stringify({ type: addedNode.type, literal: addedNode.literal });
-                const existingNode = removedMap.get(key);
-
-                if (existingNode && areNodesEqual(existingNode, addedNode)) {
-                  // If nodes are equal in content, update the existing node with the new ID
-                  // but keep its children if they're the same
-                  const updatedNode = {
-                    ...existingNode,
-                    id: addedNode.id,
-                    children: addedNode.children
-                  };
-                  addedNodes[i] = updatedNode;
-                  removedMap.delete(key);
-                } else {
-                  // Mark this position for removal if no match found
-                  nodesToRemove.push(startIndex + i);
-                }
-              }
-
-              // Remove only the nodes that weren't matched
-              for (let i = nodesToRemove.length - 1; i >= 0; i--) {
-                const index = nodesToRemove[i];
-                if (typeof index === 'number') {
-                  doc.children.splice(index, 1);
-                }
-              }
-            }
+        let oldChildIndex = 0;
+        let addedNodesIndex = 0;
+        for (const node of doc.children) {
+          if (node.id < start) {
+            oldChildIndex++;
+            continue;
           }
-
-          // Handle added nodes
-          if (result.addedNodes.length > 0) {
-            // If we have a removedRange, insert at that position
-            if (result.removedRange) {
-              const startIndex = doc.children.findIndex(
-                (child) => child.id === result.removedRange?.id[0],
-              );
-              if (startIndex !== -1) {
-                doc.children.splice(startIndex, 0, ...result.addedNodes);
-              } else {
-                doc.children.push(...result.addedNodes);
-              }
-            } else {
-              // Otherwise append to the end
-              doc.children.push(...result.addedNodes);
-            }
+          const newNode = result.addedNodes[addedNodesIndex];
+          addedNodesIndex++;
+          if (!newNode) {
+            oldChildIndex++;
+            continue;
           }
+          if (node.id <= end) {
+            setDoc("children", oldChildIndex, reconcile(newNode))
+            oldChildIndex++;
+            continue;
+          }
+          setDoc("children", oldChildIndex, newNode);
+          oldChildIndex++;
         }
-      }),
-    );
+
+        if (addedNodesIndex < result.addedNodes.length) {
+          setDoc("children", c => [...c, ...result.addedNodes.slice(addedNodesIndex)])
+        }
+      }
+    })
   };
 
   const append = (markdown: string) => {
@@ -179,12 +132,12 @@ function hello() {
 // const toStream = "cool"
 
 async function stream() {
-  for (let i = 0; i < toStream.length; i += 30) {
-    const chunk = toStream.slice(i, i + 30);
+  for (let i = 0; i < toStream.length; i += 10) {
+    const chunk = toStream.slice(i, i + 10);
     await new Promise((resolve) => setTimeout(resolve, 100));
     p.append(chunk);
+    // console.log(JSON.stringify(p.doc, null, 2));
   }
-  // console.log(JSON.stringify(store.ast, null, 2));
 }
 
 const TreeView = () => {
