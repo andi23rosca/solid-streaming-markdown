@@ -22,11 +22,15 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
   const { node } = props;
 
   return (
-    <Switch fallback={<span class="markdown-unknown">{node.literal}</span>}>
+    <Switch fallback={<span class="markdown-unknown" data-node={JSON.stringify(node)}>{node.literal}</span>}>
       <Match when={node.type === "doc"}>
         <div class="markdown-doc">
           <AstNodeChildren node={node} />
         </div>
+      </Match>
+
+      <Match when={node.type === "softbreak"}>
+        <br />
       </Match>
 
       <Match when={node.type === "heading" && (node as HeadingASTNode)}>

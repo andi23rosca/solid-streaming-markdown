@@ -1,20 +1,29 @@
 import { ToastMark } from "src/toastmark/toastmark";
 import {
   createAST,
-  type HeadingASTNode,
   type ASTNode,
   type ASTResult,
-  type ListASTNode,
-  type CustomBlockASTNode,
-  type CustomInlineASTNode,
-  type CodeBlockASTNode,
-  type LinkASTNode,
 } from "src/toastmark/ast";
 import { createStore, produce } from "solid-js/store";
-import { Dynamic, render } from "solid-js/web";
-import { type JSX, For, Show, Switch, Match } from "solid-js";
 import type { Pos } from "src/toastmark/types/node";
 import { ASTNodeRenderer } from "./components/ASTRenderers";
+
+// Helper function to compare nodes recursively
+const areNodesEqual = (node1: ASTNode, node2: ASTNode): boolean => {
+  if (!node1 || !node2) return false;
+  if (node1.type !== node2.type) return false;
+  if (node1.literal !== node2.literal) return false;
+  if (node1.children?.length !== node2.children?.length) return false;
+
+  if (node1.children && node2.children) {
+    return node1.children.every((child1, index) => {
+      const child2 = node2.children[index];
+      return child2 ? areNodesEqual(child1, child2) : false;
+    });
+  }
+
+  return true;
+};
 
 const createIncrementalParser = (initialMarkdown = "") => {
   const p = new ToastMark(initialMarkdown);
@@ -41,7 +50,49 @@ const createIncrementalParser = (initialMarkdown = "") => {
             );
 
             if (startIndex !== -1 && endIndex !== -1) {
-              doc.children.splice(startIndex, endIndex - startIndex + 1);
+              // Instead of removing all nodes, compare and only remove changed ones
+              const removedNodes = doc.children.slice(startIndex, endIndex + 1);
+              const addedNodes = result.addedNodes;
+
+              // Create a map of content-based keys to help match similar nodes
+              const removedMap = new Map(
+                removedNodes.map(node => [JSON.stringify({ type: node.type, literal: node.literal }), node])
+              );
+
+              // Keep track of which nodes to actually remove
+              const nodesToRemove: number[] = [];
+
+              // For each added node, check if we can reuse an existing node's content
+              for (let i = 0; i < addedNodes.length; i++) {
+                const addedNode = addedNodes[i];
+                if (!addedNode) continue;
+
+                const key = JSON.stringify({ type: addedNode.type, literal: addedNode.literal });
+                const existingNode = removedMap.get(key);
+
+                if (existingNode && areNodesEqual(existingNode, addedNode)) {
+                  // If nodes are equal in content, update the existing node with the new ID
+                  // but keep its children if they're the same
+                  const updatedNode = {
+                    ...existingNode,
+                    id: addedNode.id,
+                    children: addedNode.children
+                  };
+                  addedNodes[i] = updatedNode;
+                  removedMap.delete(key);
+                } else {
+                  // Mark this position for removal if no match found
+                  nodesToRemove.push(startIndex + i);
+                }
+              }
+
+              // Remove only the nodes that weren't matched
+              for (let i = nodesToRemove.length - 1; i >= 0; i--) {
+                const index = nodesToRemove[i];
+                if (typeof index === 'number') {
+                  doc.children.splice(index, 1);
+                }
+              }
             }
           }
 
