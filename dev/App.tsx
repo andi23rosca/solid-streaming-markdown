@@ -5,6 +5,10 @@ import {
   type ASTNode,
   type ASTResult,
   type ListASTNode,
+  type CustomBlockASTNode,
+  type CustomInlineASTNode,
+  type CodeBlockASTNode,
+  type LinkASTNode,
 } from "src/toastmark/ast";
 import { createStore, produce } from "solid-js/store";
 import { Dynamic, render } from "solid-js/web";
@@ -70,7 +74,7 @@ const createIncrementalParser = (initialMarkdown = "") => {
     const diff = p.editMarkdown(lastPosition, lastPosition, markdown);
     const astResults = createAST(diff);
     updateDoc(astResults);
-    console.log(doc);
+    // console.log(doc);
     return astResults;
   };
 
@@ -190,28 +194,26 @@ const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         <code class="markdown-code">{node.literal}</code>
       </Match>
 
-      <Match when={node.type === "link"}>
-        {(() => {
-          const linkNode = node as { destination: string | null };
+      <Match when={node.type === "link" && (node as LinkASTNode)}>
+        {(node) => {
           return (
-            <a href={linkNode.destination || "#"} class="markdown-link">
-              <AstNodeChildren node={node} />
+            <a href={node().destination || "#"} class="markdown-link">
+              <AstNodeChildren node={node()} />
             </a>
           );
-        })()}
+        }}
       </Match>
 
-      <Match when={node.type === "image"}>
-        {(() => {
-          const imageNode = node as { destination: string | null };
+      <Match when={node.type === "image" && (node as LinkASTNode)}>
+        {(node) => {
           return (
             <img
-              src={imageNode.destination || ""}
-              alt={node.literal || ""}
+              src={node().destination || ""}
+              alt={node().literal || ""}
               class="markdown-image"
             />
           );
-        })()}
+        }}
       </Match>
 
       <Match when={node.type === "list" && (node as ListASTNode)}>
@@ -233,17 +235,16 @@ const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         </li>
       </Match>
 
-      <Match when={node.type === "codeBlock"}>
-        {(() => {
-          const codeBlockNode = node as { info: string | null };
+      <Match when={node.type === "codeBlock" && (node as CodeBlockASTNode)}>
+        {(node) => {
           return (
             <pre class="markdown-code-block">
-              <code class={`language-${codeBlockNode.info || ""}`}>
-                {node.literal}
+              <code class={`language-${node().info || ""}`}>
+                {node().literal}
               </code>
             </pre>
           );
-        })()}
+        }}
       </Match>
 
       <Match when={node.type === "blockQuote"}>
@@ -260,26 +261,26 @@ const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         <div class="markdown-html-block" innerHTML={node.literal || ""} />
       </Match>
 
-      <Match when={node.type === "customBlock"}>
-        {(() => {
-          const customBlockNode = node as { info: string };
+      <Match when={node.type === "customBlock" && (node as CustomBlockASTNode)}>
+        {(node) => {
           return (
-            <div class={`markdown-custom-block ${customBlockNode.info}`}>
-              {node.literal}
+            <div class={`markdown-custom-block ${node().info}`}>
+              {node().literal}
             </div>
           );
-        })()}
+        }}
       </Match>
 
-      <Match when={node.type === "customInline"}>
-        {(() => {
-          const customInlineNode = node as { info: string };
+      <Match
+        when={node.type === "customInline" && (node as CustomInlineASTNode)}
+      >
+        {(node) => {
           return (
-            <span class={`markdown-custom-inline ${customInlineNode.info}`}>
-              {node.literal}
+            <span class={`markdown-custom-inline ${node().info}`}>
+              {node().literal}
             </span>
           );
-        })()}
+        }}
       </Match>
     </Switch>
   );
