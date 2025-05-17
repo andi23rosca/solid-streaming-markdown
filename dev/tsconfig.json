@@ -1,7 +1,10 @@
 {
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "types": ["vite/client"]
-  },
-  "exclude": ["node_modules", "dist"]
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"types": ["vite/client"],
+		"paths": {
+			"@t/*": ["../src/toastmark/types/*"]
+		}
+	},
+	"exclude": ["node_modules", "dist"]
 }

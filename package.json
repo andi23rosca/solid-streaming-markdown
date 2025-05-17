@@ -56,7 +56,12 @@
   "peerDependencies": {
     "solid-js": "^1.6.0"
   },
+  "dependencies": {
+    "entities": "^2.0.0",
+    "mdurl": "^1.0.1"
+  },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/node": "^20.12.12",
     "@typescript-eslint/eslint-plugin": "^7.9.0",
     "@typescript-eslint/parser": "^7.9.0",

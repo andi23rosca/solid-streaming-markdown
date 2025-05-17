@@ -4,6 +4,14 @@ body {
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #282c34;
+  color: #fff;
+}
+
+#root {
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 code {
