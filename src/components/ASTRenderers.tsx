@@ -1,4 +1,15 @@
-import { type JSX, For, Switch, Match } from "solid-js";
+import {
+	type JSX,
+	For,
+	Switch,
+	Match,
+	type Component,
+	createContext,
+	useContext,
+	type ParentComponent,
+	JSXElement,
+	mergeProps,
+} from "solid-js";
 import { Dynamic } from "solid-js/web";
 import type {
 	ASTNode,
@@ -11,9 +22,87 @@ import type {
 	TableASTNode,
 	TableCellASTNode,
 	ItemASTNode,
+	DocASTNode,
 } from "src/toastmark/ast";
 
-export const AstNodeChildren = (props: { node: ASTNode }): JSX.Element => {
+export type MarkdownRendererComponents = {
+	document: Component<{ node: DocASTNode }>;
+};
+export type MarkdownRendererOptions = Partial<{
+	/**
+	 * Whether to auto-generate default classes for each markdown node, e.g.: `<p class="md-paragraph" />`
+	 * @default true
+	 */
+	defaultClasses?: boolean;
+	/**
+	 * The prefix to use for default classes if they're enabled, e.g.: `md-`
+	 * @default "md-"
+	 */
+	classPrefix?: string;
+
+	/**
+	 * Custom components to use for rendering markdown nodes.
+	 *
+	 * @example
+	 * ```ts
+	 * components: {
+	 *   heading: (props: { node: HeadingASTNode }) => <h1>{props.node.literal}</h1>,
+	 * }
+	 * ```
+	 */
+	components: Partial<MarkdownRendererComponents>;
+}>;
+
+const getNodeClass = (node: ASTNode) => {
+	const { options } = useSolidStreamingMarkdownContext();
+	const classPrefix = options.classPrefix || "md-";
+	const defaultClasses = options.defaultClasses ?? true;
+	return { [`${classPrefix}${node.type}`]: defaultClasses };
+};
+
+const defaultComponents: MarkdownRendererComponents = {
+	document: (props) => (
+		<div classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</div>
+	),
+};
+
+const MarkdownRendererContext = createContext({
+	options: {
+		components: {
+			...defaultComponents,
+		},
+	} as MarkdownRendererOptions & {
+		components: MarkdownRendererComponents;
+	},
+});
+
+export const useSolidStreamingMarkdownContext = () =>
+	useContext(MarkdownRendererContext);
+export const SolidStreamingMarkdownContextProvider: ParentComponent<{
+	options: MarkdownRendererOptions;
+}> = (props) => {
+	return (
+		<MarkdownRendererContext.Provider
+			value={{
+				options: {
+					...props.options,
+					components: {
+						...defaultComponents,
+						...props.options.components,
+					},
+				},
+			}}
+		>
+			{props.children}
+		</MarkdownRendererContext.Provider>
+	);
+};
+
+export const SolidStreamingMarkdownChildren = (props: {
+	node: ASTNode;
+}): JSX.Element => {
 	return (
 		<For each={props.node.children}>
 			{(child) => <ASTNodeRenderer node={child} />}
@@ -22,6 +111,8 @@ export const AstNodeChildren = (props: { node: ASTNode }): JSX.Element => {
 };
 
 export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
+	const { options } = useSolidStreamingMarkdownContext();
+	const comp = options.components;
 	return (
 		<Switch
 			fallback={
@@ -31,9 +122,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 			}
 		>
 			<Match when={props.node.type === "doc"}>
-				<div class="markdown-doc">
-					<AstNodeChildren node={props.node} />
-				</div>
+				<Dynamic component={comp.document} node={props.node as DocASTNode} />
 			</Match>
 
 			<Match when={props.node.type === "softbreak"}>
@@ -49,7 +138,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 							component={`h${node().level}`}
 							class={`markdown-heading h${node().level}`}
 						>
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</Dynamic>
 					);
 				}}
@@ -57,7 +146,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 
 			<Match when={props.node.type === "paragraph"}>
 				<p class="markdown-paragraph">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</p>
 			</Match>
 
@@ -67,13 +156,13 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 
 			<Match when={props.node.type === "strong"}>
 				<strong class="markdown-strong">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</strong>
 			</Match>
 
 			<Match when={props.node.type === "emph"}>
 				<em class="markdown-emph">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</em>
 			</Match>
 
@@ -85,7 +174,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 				{(node) => {
 					return (
 						<a href={node().destination || "#"} class="markdown-link">
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</a>
 					);
 				}}
@@ -110,7 +199,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 							component={node().listData?.type === "ordered" ? "ol" : "ul"}
 							class={`markdown-list ${node().listData?.type || "bullet"}`}
 						>
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</Dynamic>
 					);
 				}}
@@ -128,7 +217,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 									class="markdown-task-checkbox"
 								/>
 							)}
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</li>
 					);
 				}}
@@ -152,7 +241,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 
 			<Match when={props.node.type === "blockQuote"}>
 				<blockquote class="markdown-blockquote">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</blockquote>
 			</Match>
 
@@ -183,7 +272,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 				{(node) => {
 					return (
 						<table class="markdown-table">
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</table>
 					);
 				}}
@@ -191,19 +280,19 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 
 			<Match when={props.node.type === "tableHead"}>
 				<thead class="markdown-table-head">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</thead>
 			</Match>
 
 			<Match when={props.node.type === "tableBody"}>
 				<tbody class="markdown-table-body">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</tbody>
 			</Match>
 
 			<Match when={props.node.type === "tableRow"}>
 				<tr class="markdown-table-row">
-					<AstNodeChildren node={props.node} />
+					<SolidStreamingMarkdownChildren node={props.node} />
 				</tr>
 			</Match>
 
@@ -227,7 +316,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 							class="markdown-table-cell"
 							style={getStyle()}
 						>
-							<AstNodeChildren node={node()} />
+							<SolidStreamingMarkdownChildren node={node()} />
 						</Dynamic>
 					);
 				}}

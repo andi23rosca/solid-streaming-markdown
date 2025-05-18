@@ -1,5 +1,5 @@
 import { ASTNodeRenderer } from "../src/components/ASTRenderers";
-import { createSolidStreamingMarkdown } from "../src";
+import { createSolidStreamingMarkdown, SolidStreamingMarkdown } from "../src";
 import README from "../README.md?raw";
 
 // const createIncrementalParser = (initialMarkdown = "") => {
@@ -132,7 +132,10 @@ const TreeView = () => {
 			</button>
 			{/* <h1>Markdown Tree View</h1> */}
 			<div class="markdown-content">
-				<ASTNodeRenderer node={p.doc} />
+				<SolidStreamingMarkdown
+					doc={p.doc}
+					options={{ defaultClasses: true }}
+				/>
 			</div>
 		</div>
 	);
