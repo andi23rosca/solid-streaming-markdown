@@ -10,15 +10,81 @@
  * Source https://gist.github.com/tuzz/3331384 (MIT), version 8
  */
 
- body {
+:root {
+  /* Text colors */
+  --color-text-primary: #333;
+  --color-text-secondary: #6a737d;
+  --color-text-tertiary: #444d56;
+  --color-text-muted: #586069;
+  --color-text-subtle: #959da5;
+  --color-text-code: #24292e;
+  --color-text-heading: #1b1f23;
+  --color-text-link: #0366d6;
+  --color-text-link-hover: #005cc5;
+  --color-text-blockquote: #6a737d;
+
+  /* Background colors */
+  --color-bg-primary: white;
+  --color-bg-secondary: #fafbfc;
+  --color-bg-tertiary: #f6f8fa;
+  --color-bg-code: rgba(27,31,35,.05);
+  --color-bg-code-block: #f6f8fa;
+  --color-bg-table: #fff;
+  --color-bg-table-alt: #f6f8fa;
+  --color-bg-mark: #ffeef0;
+  --color-bg-mark-success: #f0fff4;
+  --color-bg-mark-warning: #ffebda;
+  --color-bg-mark-info: #f6f8fa;
+
+  /* Border colors */
+  --color-border-primary: #dfe2e5;
+  --color-border-secondary: #e1e4e8;
+  --color-border-tertiary: #d1d5da;
+  --color-border-table: #c6cbd1;
+}
+
+:root[data-theme="dark"] {
+  /* Text colors */
+  --color-text-primary: #c9d1d9;
+  --color-text-secondary: #8b949e;
+  --color-text-tertiary: #6e7681;
+  --color-text-muted: #8b949e;
+  --color-text-subtle: #6e7681;
+  --color-text-code: #c9d1d9;
+  --color-text-heading: #c9d1d9;
+  --color-text-link: #58a6ff;
+  --color-text-link-hover: #79b8ff;
+  --color-text-blockquote: #8b949e;
+
+  /* Background colors */
+  --color-bg-primary: #0d1117;
+  --color-bg-secondary: #161b22;
+  --color-bg-tertiary: #21262d;
+  --color-bg-code: rgba(110,118,129,0.4);
+  --color-bg-code-block: #161b22;
+  --color-bg-table: #0d1117;
+  --color-bg-table-alt: #161b22;
+  --color-bg-mark: rgba(187,128,9,0.15);
+  --color-bg-mark-success: rgba(46,160,67,0.15);
+  --color-bg-mark-warning: rgba(187,128,9,0.15);
+  --color-bg-mark-info: rgba(88,166,255,0.15);
+
+  /* Border colors */
+  --color-border-primary: #30363d;
+  --color-border-secondary: #21262d;
+  --color-border-tertiary: #30363d;
+  --color-border-table: #30363d;
+}
+
+body {
   font-family: Helvetica, arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
   padding-top: 10px;
   padding-bottom: 10px;
-  background-color: white;
+  background-color: var(--color-bg-primary);
   padding: 30px;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 body > *:first-child {
@@ -57,7 +123,7 @@ h3 .octicon-link,
 h4 .octicon-link,
 h5 .octicon-link,
 h6 .octicon-link {
-  color: #1b1f23;
+  color: var(--color-text-heading);
   vertical-align: middle;
   visibility: hidden;
 }
@@ -91,7 +157,6 @@ h6:hover .anchor .octicon-link:before {
   content: ' ';
   display: inline-block;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'%3E%3Cpath fill-rule='evenodd' d='M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z'%3E%3C/path%3E%3C/svg%3E");
-}{
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
@@ -112,6 +177,8 @@ summary {
 
 a {
   background-color: initial;
+  color: var(--color-text-link);
+  text-decoration: none;
 }
 
 a:active,
@@ -144,6 +211,9 @@ hr {
   box-sizing: initial;
   height: 0;
   overflow: visible;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 input {
@@ -170,26 +240,13 @@ input {
   line-height: inherit;
 }
 
-a {
-  color: #0366d6;
-  text-decoration: none;
-}
-
 a:hover {
   text-decoration: underline;
+  color: var(--color-text-link-hover);
 }
 
 strong {
   font-weight: 600;
-}
-
-hr {
-  height: 0;
-  margin: 15px 0;
-  overflow: hidden;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid #dfe2e5;
 }
 
 hr:after,
@@ -285,6 +342,17 @@ p {
 
 blockquote {
   margin: 0;
+  padding: 0 1em;
+  color: var(--color-text-blockquote);
+  border-left: .25em solid var(--color-border-primary);
+}
+
+blockquote>:first-child {
+  margin-top: 0;
+}
+
+blockquote>:last-child {
+  margin-bottom: 0;
 }
 
 ol,
@@ -427,30 +495,30 @@ input::-webkit-outer-spin-button {
 }
 
 .pl-c {
-  color: #6a737d;
+  color: var(--color-text-secondary);
 }
 
 .pl-c1,
 .pl-s .pl-v {
-  color: #005cc5;
+  color: var(--color-text-link);
 }
 
 .pl-e,
 .pl-en {
-  color: #6f42c1;
+  color: var(--color-text-link);
 }
 
 .pl-s .pl-s1,
 .pl-smi {
-  color: #24292e;
+  color: var(--color-text-code);
 }
 
 .pl-ent {
-  color: #22863a;
+  color: var(--color-text-success);
 }
 
 .pl-k {
-  color: #d73a49;
+  color: var(--color-text-error);
 }
 
 .pl-pds,
@@ -460,26 +528,26 @@ input::-webkit-outer-spin-button {
 .pl-sr .pl-cce,
 .pl-sr .pl-sra,
 .pl-sr .pl-sre {
-  color: #032f62;
+  color: var(--color-text-link);
 }
 
 .pl-smw,
 .pl-v {
-  color: #e36209;
+  color: var(--color-text-warning);
 }
 
 .pl-bu {
-  color: #b31d28;
+  color: var(--color-text-error);
 }
 
 .pl-ii {
-  color: #fafbfc;
-  background-color: #b31d28;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-mark);
 }
 
 .pl-c2 {
-  color: #fafbfc;
-  background-color: #d73a49;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-mark);
 }
 
 .pl-c2:before {
@@ -488,66 +556,66 @@ input::-webkit-outer-spin-button {
 
 .pl-sr .pl-cce {
   font-weight: 700;
-  color: #22863a;
+  color: var(--color-text-success);
 }
 
 .pl-ml {
-  color: #735c0f;
+  color: var(--color-text-warning);
 }
 
 .pl-mh,
 .pl-mh .pl-en,
 .pl-ms {
   font-weight: 700;
-  color: #005cc5;
+  color: var(--color-text-link);
 }
 
 .pl-mi {
   font-style: italic;
-  color: #24292e;
+  color: var(--color-text-code);
 }
 
 .pl-mb {
   font-weight: 700;
-  color: #24292e;
+  color: var(--color-text-code);
 }
 
 .pl-md {
-  color: #b31d28;
-  background-color: #ffeef0;
+  color: var(--color-text-error);
+  background-color: var(--color-bg-mark);
 }
 
 .pl-mi1 {
-  color: #22863a;
-  background-color: #f0fff4;
+  color: var(--color-text-success);
+  background-color: var(--color-bg-mark-success);
 }
 
 .pl-mc {
-  color: #e36209;
-  background-color: #ffebda;
+  color: var(--color-text-warning);
+  background-color: var(--color-bg-mark-warning);
 }
 
 .pl-mi2 {
-  color: #f6f8fa;
-  background-color: #005cc5;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-mark-info);
 }
 
 .pl-mdr {
   font-weight: 700;
-  color: #6f42c1;
+  color: var(--color-text-link);
 }
 
 .pl-ba {
-  color: #586069;
+  color: var(--color-text-muted);
 }
 
 .pl-sg {
-  color: #959da5;
+  color: var(--color-text-subtle);
 }
 
 .pl-corl {
   text-decoration: underline;
-  color: #032f62;
+  color: var(--color-text-link);
 }
 
 .mb-0 {
@@ -684,20 +752,6 @@ hr {
   border: 0;
 }
 
-blockquote {
-  padding: 0 1em;
-  color: #6a737d;
-  border-left: .25em solid #dfe2e5;
-}
-
-blockquote>:first-child {
-  margin-top: 0;
-}
-
-blockquote>:last-child {
-  margin-bottom: 0;
-}
-
 h1,
 h2,
 h3,
@@ -717,7 +771,7 @@ h1 {
 h1,
 h2 {
   padding-bottom: .3em;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 h2 {
@@ -796,16 +850,16 @@ table th {
 table td,
 table th {
   padding: 6px 13px;
-  border: 1px solid #dfe2e5;
+  border: 1px solid var(--color-border-primary);
 }
 
 table tr {
-  background-color: #fff;
-  border-top: 1px solid #c6cbd1;
+  background-color: var(--color-bg-table);
+  border-top: 1px solid var(--color-border-table);
 }
 
 table tr:nth-child(2n) {
-  background-color: #f6f8fa;
+  background-color: var(--color-bg-table-alt);
 }
 
 img {
@@ -826,7 +880,7 @@ code {
   padding: .2em .4em;
   margin: 0;
   font-size: 85%;
-  background-color: rgba(27,31,35,.05);
+  background-color: var(--color-bg-code);
   border-radius: 3px;
 }
 
@@ -859,7 +913,7 @@ pre {
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: var(--color-bg-code-block);
   border-radius: 3px;
 }
 
