@@ -33,3 +33,9 @@ Use it:
 ```tsx
 import solid-streaming-markdown from 'solid-streaming-markdown'
 ```
+
+
+## Parser forked from `toastmark`
+
+Special thanks to the tui developers: https://github.com/nhn/tui.editor
+The incremental parser is a fork of `toastmark`

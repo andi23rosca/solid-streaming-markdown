@@ -1,6 +1,6 @@
 {
   "name": "solid-streaming-markdown",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Parse markdown streamed by LLMs incrementally, render it with fancy animations (like ChatGPT).",
   "license": "MIT",
   "author": "andi23rosca",
@@ -19,11 +19,50 @@
   "private": false,
   "sideEffects": false,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/server.js",
+  "module": "./dist/server.js",
   "types": "./dist/index.d.ts",
-  "browser": {},
+  "browser": {
+    "./dist/server.js": "./dist/index.js"
+  },
   "exports": {
+    "worker": {
+      "solid": "./dist/server.jsx",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/server.js"
+      }
+    },
+    "browser": {
+      "solid": {
+        "development": "./dist/dev.jsx",
+        "import": "./dist/index.jsx"
+      },
+      "development": {
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/dev.js"
+        }
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "deno": {
+      "solid": "./dist/server.jsx",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/server.js"
+      }
+    },
+    "node": {
+      "solid": "./dist/server.jsx",
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/server.js"
+      }
+    },
     "solid": {
       "development": "./dist/dev.jsx",
       "import": "./dist/index.jsx"
