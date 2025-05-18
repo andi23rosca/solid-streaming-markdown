@@ -32,7 +32,7 @@ export const createSolidStreamingMarkdown = (
 	const appendPositions: Pos[] = [];
 
 	const [doc, setDoc] = createStore<DocASTNode>({
-		type: "doc",
+		type: "document",
 		id: 0,
 		literal: null,
 		children: [],
@@ -145,7 +145,7 @@ export const createSolidStreamingMarkdown = (
 			appendPositions.length = 0;
 			unsafe.parser = parser;
 			setDoc({
-				type: "doc",
+				type: "document",
 				id: 0,
 				literal: null,
 				children: [],

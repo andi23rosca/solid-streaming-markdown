@@ -111,7 +111,7 @@ export interface CustomInlineASTNode extends BaseASTNode {
 }
 
 export interface DocASTNode extends BaseASTNode {
-	type: "doc";
+	type: "document";
 }
 
 // Union type of all possible AST nodes

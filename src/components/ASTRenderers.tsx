@@ -1,14 +1,10 @@
 import {
 	type JSX,
 	For,
-	Switch,
-	Match,
 	type Component,
 	createContext,
 	useContext,
 	type ParentComponent,
-	JSXElement,
-	mergeProps,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import type {
@@ -27,7 +23,33 @@ import type {
 
 export type MarkdownRendererComponents = {
 	document: Component<{ node: DocASTNode }>;
+	heading: Component<{ node: HeadingASTNode }>;
+	paragraph: Component<{ node: ASTNode }>;
+	text: Component<{ node: ASTNode }>;
+	strong: Component<{ node: ASTNode }>;
+	emph: Component<{ node: ASTNode }>;
+	code: Component<{ node: ASTNode }>;
+	link: Component<{ node: LinkASTNode }>;
+	image: Component<{ node: LinkASTNode }>;
+	list: Component<{ node: ListASTNode }>;
+	item: Component<{ node: ItemASTNode }>;
+	codeBlock: Component<{ node: CodeBlockASTNode }>;
+	blockQuote: Component<{ node: ASTNode }>;
+	thematicBreak: Component<{ node: ASTNode }>;
+	htmlBlock: Component<{ node: ASTNode }>;
+	customBlock: Component<{ node: CustomBlockASTNode }>;
+	table: Component<{ node: TableASTNode }>;
+	tableHead: Component<{ node: ASTNode }>;
+	tableBody: Component<{ node: ASTNode }>;
+	tableRow: Component<{ node: ASTNode }>;
+	tableCell: Component<{ node: TableCellASTNode }>;
+	customInline: Component<{ node: CustomInlineASTNode }>;
+	unknown: Component<{ node: ASTNode }>;
+	softbreak: Component<{ node: ASTNode }>;
+	tableDelimRow: Component<{ node: ASTNode }>;
+	tableDelimCell: Component<{ node: ASTNode }>;
 };
+
 export type MarkdownRendererOptions = Partial<{
 	/**
 	 * Whether to auto-generate default classes for each markdown node, e.g.: `<p class="md-paragraph" />`
@@ -66,6 +88,132 @@ const defaultComponents: MarkdownRendererComponents = {
 			<SolidStreamingMarkdownChildren node={props.node} />
 		</div>
 	),
+	heading: (props) => (
+		<Dynamic
+			component={`h${props.node.level}`}
+			classList={getNodeClass(props.node)}
+		>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</Dynamic>
+	),
+	paragraph: (props) => (
+		<p classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</p>
+	),
+	text: (props) => (
+		<span classList={getNodeClass(props.node)}>{props.node.literal}</span>
+	),
+	strong: (props) => (
+		<strong classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</strong>
+	),
+	emph: (props) => (
+		<em classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</em>
+	),
+	code: (props) => (
+		<code classList={getNodeClass(props.node)}>{props.node.literal}</code>
+	),
+	link: (props) => (
+		<a
+			href={props.node.destination || "#"}
+			classList={getNodeClass(props.node)}
+		>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</a>
+	),
+	image: (props) => (
+		<img
+			src={props.node.destination || ""}
+			alt={props.node.literal || ""}
+			classList={getNodeClass(props.node)}
+		/>
+	),
+	list: (props) => (
+		<Dynamic
+			component={props.node.listData?.type === "ordered" ? "ol" : "ul"}
+			classList={getNodeClass(props.node)}
+		>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</Dynamic>
+	),
+	item: (props) => (
+		<li classList={getNodeClass(props.node)}>
+			{props.node.listData.task && (
+				<input
+					type="checkbox"
+					checked={props.node.listData.checked}
+					disabled
+					class="markdown-task-checkbox"
+				/>
+			)}
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</li>
+	),
+	codeBlock: (props) => (
+		<pre classList={getNodeClass(props.node)}>
+			<code class={`language-${props.node.info || ""}`}>
+				{props.node.literal}
+			</code>
+		</pre>
+	),
+	blockQuote: (props) => (
+		<blockquote classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</blockquote>
+	),
+	thematicBreak: (props) => <hr classList={getNodeClass(props.node)} />,
+	htmlBlock: (props) => (
+		<div
+			classList={getNodeClass(props.node)}
+			innerHTML={props.node.literal || ""}
+		/>
+	),
+	customBlock: (props) => (
+		<div classList={getNodeClass(props.node)}>{props.node.literal}</div>
+	),
+	table: (props) => (
+		<table classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</table>
+	),
+	tableHead: (props) => (
+		<thead classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</thead>
+	),
+	tableBody: (props) => (
+		<tbody classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</tbody>
+	),
+	tableRow: (props) => (
+		<tr classList={getNodeClass(props.node)}>
+			<SolidStreamingMarkdownChildren node={props.node} />
+		</tr>
+	),
+	tableCell: (props) => {
+		// For now, we'll just render the cell without alignment
+		// In a real implementation, we would need to access the parent table node
+		// to get column alignment information
+		return (
+			<td classList={getNodeClass(props.node)}>
+				<SolidStreamingMarkdownChildren node={props.node} />
+			</td>
+		);
+	},
+	customInline: (props) => (
+		<span classList={getNodeClass(props.node)}>{props.node.literal}</span>
+	),
+	unknown: (props) => (
+		<span classList={getNodeClass(props.node)}>{props.node.literal}</span>
+	),
+	softbreak: () => <br />,
+	tableDelimRow: () => null,
+	tableDelimCell: () => null,
 };
 
 const MarkdownRendererContext = createContext({
@@ -113,233 +261,15 @@ export const SolidStreamingMarkdownChildren = (props: {
 export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 	const { options } = useSolidStreamingMarkdownContext();
 	const comp = options.components;
+
 	return (
-		<Switch
-			fallback={
-				<span class="markdown-unknown" data-node={JSON.stringify(props.node)}>
-					{props.node.literal}
-				</span>
+		<Dynamic
+			component={
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+				comp[props.node.type as keyof MarkdownRendererComponents] ||
+				comp.unknown
 			}
-		>
-			<Match when={props.node.type === "doc"}>
-				<Dynamic component={comp.document} node={props.node as DocASTNode} />
-			</Match>
-
-			<Match when={props.node.type === "softbreak"}>
-				<br />
-			</Match>
-
-			<Match
-				when={props.node.type === "heading" && (props.node as HeadingASTNode)}
-			>
-				{(node) => {
-					return (
-						<Dynamic
-							component={`h${node().level}`}
-							class={`markdown-heading h${node().level}`}
-						>
-							<SolidStreamingMarkdownChildren node={node()} />
-						</Dynamic>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "paragraph"}>
-				<p class="markdown-paragraph">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</p>
-			</Match>
-
-			<Match when={props.node.type === "text"}>
-				<span class="markdown-text">{props.node.literal}</span>
-			</Match>
-
-			<Match when={props.node.type === "strong"}>
-				<strong class="markdown-strong">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</strong>
-			</Match>
-
-			<Match when={props.node.type === "emph"}>
-				<em class="markdown-emph">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</em>
-			</Match>
-
-			<Match when={props.node.type === "code"}>
-				<code class="markdown-code">{props.node.literal}</code>
-			</Match>
-
-			<Match when={props.node.type === "link" && (props.node as LinkASTNode)}>
-				{(node) => {
-					return (
-						<a href={node().destination || "#"} class="markdown-link">
-							<SolidStreamingMarkdownChildren node={node()} />
-						</a>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "image" && (props.node as LinkASTNode)}>
-				{(node) => {
-					return (
-						<img
-							src={node().destination || ""}
-							alt={node().literal || ""}
-							class="markdown-image"
-						/>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "list" && (props.node as ListASTNode)}>
-				{(node) => {
-					return (
-						<Dynamic
-							component={node().listData?.type === "ordered" ? "ol" : "ul"}
-							class={`markdown-list ${node().listData?.type || "bullet"}`}
-						>
-							<SolidStreamingMarkdownChildren node={node()} />
-						</Dynamic>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "item" && (props.node as ItemASTNode)}>
-				{(node) => {
-					return (
-						<li class="markdown-item">
-							{node().listData.task && (
-								<input
-									type="checkbox"
-									checked={node().listData.checked}
-									disabled
-									class="markdown-task-checkbox"
-								/>
-							)}
-							<SolidStreamingMarkdownChildren node={node()} />
-						</li>
-					);
-				}}
-			</Match>
-
-			<Match
-				when={
-					props.node.type === "codeBlock" && (props.node as CodeBlockASTNode)
-				}
-			>
-				{(node) => {
-					return (
-						<pre class="markdown-code-block">
-							<code class={`language-${node().info || ""}`}>
-								{node().literal}
-							</code>
-						</pre>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "blockQuote"}>
-				<blockquote class="markdown-blockquote">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</blockquote>
-			</Match>
-
-			<Match when={props.node.type === "thematicBreak"}>
-				<hr class="markdown-thematic-break" />
-			</Match>
-
-			<Match when={props.node.type === "htmlBlock"}>
-				<div class="markdown-html-block" innerHTML={props.node.literal || ""} />
-			</Match>
-
-			<Match
-				when={
-					props.node.type === "customBlock" &&
-					(props.node as CustomBlockASTNode)
-				}
-			>
-				{(node) => {
-					return (
-						<div class={`markdown-custom-block ${node().info}`}>
-							{node().literal}
-						</div>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "table" && (props.node as TableASTNode)}>
-				{(node) => {
-					return (
-						<table class="markdown-table">
-							<SolidStreamingMarkdownChildren node={node()} />
-						</table>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "tableHead"}>
-				<thead class="markdown-table-head">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</thead>
-			</Match>
-
-			<Match when={props.node.type === "tableBody"}>
-				<tbody class="markdown-table-body">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</tbody>
-			</Match>
-
-			<Match when={props.node.type === "tableRow"}>
-				<tr class="markdown-table-row">
-					<SolidStreamingMarkdownChildren node={props.node} />
-				</tr>
-			</Match>
-
-			<Match
-				when={
-					props.node.type === "tableCell" && (props.node as TableCellASTNode)
-				}
-			>
-				{(node) => {
-					const getTag = () => "td"; // Default to td, we'll handle header cells differently
-					const getTableNode = () => props.node as TableASTNode;
-					const getColumnInfo = () => getTableNode().columns[node().startIdx];
-					const getStyle = () => {
-						const align = getColumnInfo()?.align;
-						return align ? { textAlign: align } : undefined;
-					};
-
-					return (
-						<Dynamic
-							component={getTag()}
-							class="markdown-table-cell"
-							style={getStyle()}
-						>
-							<SolidStreamingMarkdownChildren node={node()} />
-						</Dynamic>
-					);
-				}}
-			</Match>
-
-			<Match when={props.node.type === "tableDelimRow"}>{null}</Match>
-
-			<Match when={props.node.type === "tableDelimCell"}>{null}</Match>
-
-			<Match
-				when={
-					props.node.type === "customInline" &&
-					(props.node as CustomInlineASTNode)
-				}
-			>
-				{(node) => {
-					return (
-						<span class={`markdown-custom-inline ${node().info}`}>
-							{node().literal}
-						</span>
-					);
-				}}
-			</Match>
-		</Switch>
+			node={props.node}
+		/>
 	);
 };
