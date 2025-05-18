@@ -52,6 +52,13 @@ export interface ListASTNode extends BaseASTNode {
 		delimiter: string;
 	} | null;
 }
+export interface ItemASTNode extends BaseASTNode {
+	type: "item";
+	listData: {
+		task: boolean;
+		checked: boolean;
+	};
+}
 
 export interface CodeBlockASTNode extends BaseASTNode {
 	type: "codeBlock";
@@ -103,6 +110,10 @@ export interface CustomInlineASTNode extends BaseASTNode {
 	info: string;
 }
 
+export interface DocASTNode extends BaseASTNode {
+	type: "doc";
+}
+
 // Union type of all possible AST nodes
 export type ASTNode =
 	| BaseASTNode
@@ -110,13 +121,15 @@ export type ASTNode =
 	| CodeASTNode
 	| HeadingASTNode
 	| ListASTNode
+	| ItemASTNode
 	| CodeBlockASTNode
 	| TableASTNode
 	| TableCellASTNode
 	| RefDefASTNode
 	| CustomBlockASTNode
 	| HtmlBlockASTNode
-	| CustomInlineASTNode;
+	| CustomInlineASTNode
+	| DocASTNode;
 
 export interface ASTResult {
 	addedNodes: ASTNode[];

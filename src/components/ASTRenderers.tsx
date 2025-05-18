@@ -10,6 +10,7 @@ import type {
 	LinkASTNode,
 	TableASTNode,
 	TableCellASTNode,
+	ItemASTNode,
 } from "src/toastmark/ast";
 
 export const AstNodeChildren = (props: { node: ASTNode }): JSX.Element => {
@@ -115,10 +116,22 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 				}}
 			</Match>
 
-			<Match when={props.node.type === "item"}>
-				<li class="markdown-item">
-					<AstNodeChildren node={props.node} />
-				</li>
+			<Match when={props.node.type === "item" && (props.node as ItemASTNode)}>
+				{(node) => {
+					return (
+						<li class="markdown-item">
+							{node().listData.task && (
+								<input
+									type="checkbox"
+									checked={node().listData.checked}
+									disabled
+									class="markdown-task-checkbox"
+								/>
+							)}
+							<AstNodeChildren node={node()} />
+						</li>
+					);
+				}}
 			</Match>
 
 			<Match
@@ -202,8 +215,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
 				{(node) => {
 					const getTag = () => "td"; // Default to td, we'll handle header cells differently
 					const getTableNode = () => props.node as TableASTNode;
-					const getColumnInfo = () =>
-						getTableNode()?.columns?.[node().startIdx];
+					const getColumnInfo = () => getTableNode().columns[node().startIdx];
 					const getStyle = () => {
 						const align = getColumnInfo()?.align;
 						return align ? { textAlign: align } : undefined;

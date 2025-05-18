@@ -1,17 +1,17 @@
 {
-  "name": "{{name_of_lib}}",
+  "name": "solid-streaming-markdown",
   "version": "0.0.0",
-  "description": "{{desc_of_lib}}",
+  "description": "Parse markdown streamed by LLMs incrementally, render it with fancy animations (like ChatGPT).",
   "license": "MIT",
-  "author": "{{me}}",
+  "author": "andi23rosca",
   "contributors": [],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/{{me}}/{{name_of_lib}}.git"
+    "url": "git+https://github.com/andi23rosca/solid-streaming-markdown.git"
   },
-  "homepage": "https://github.com/{{me}}/{{name_of_lib}}#readme",
+  "homepage": "https://github.com/andi23rosca/solid-streaming-markdown#readme",
   "bugs": {
-    "url": "https://github.com/{{me}}/{{name_of_lib}}/issues"
+    "url": "https://github.com/andi23rosca/solid-streaming-markdown/issues"
   },
   "files": [
     "dist"

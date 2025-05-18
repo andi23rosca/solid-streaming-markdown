@@ -1,36 +1,32 @@
 <p>
-  <img width="100%" src="https://assets.solidjs.com/banner?type={{name_of_lib}}&background=tiles&project=%20" alt="{{name_of_lib}}">
+  <img width="100%" src="https://assets.solidjs.com/banner?type=solid-streaming-markdown&background=tiles&project=%20" alt="solid-streaming-markdown" />
 </p>
 
-# {{name_of_lib}}
+# solid-streaming-markdown
 
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg?style=for-the-badge&logo=pnpm)](https://pnpm.io/)
 
-{{desc_of_lib}}
+Parse markdown streamed by LLMs incrementally, render it with fancy animations (like ChatGPT).
 
-> **Note** After using this template, you have to search and replace all `{{name_of_lib}}` and similar strings
-> with appropriate texts.
->
-> `{{name_of_lib}}` should be a **kebab-case** string representing the name of you monorepo.
->
-> `{{desc_of_lib}}` should be a **Normal case** string with the description of the repository.
->
-> `{{me}}` should be a **kebab-case** string from your profile URL.
+
+TODO:
+ - [ ] Optimistic parsing of constructs to minimize visual artifacts (e.g. assume `*some text` should be emphasized)
+
 
 ## Quick start
 
 Install it:
 
 ```bash
-npm i {{name_of_lib}}
+npm i solid-streaming-markdown
 # or
-yarn add {{name_of_lib}}
+yarn add solid-streaming-markdown
 # or
-pnpm add {{name_of_lib}}
+pnpm add solid-streaming-markdown
 ```
 
 Use it:
 
 ```tsx
-import {{name_of_lib}} from '{{name_of_lib}}'
+import solid-streaming-markdown from 'solid-streaming-markdown'
 ```
