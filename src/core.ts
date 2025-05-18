@@ -84,7 +84,7 @@ export const createSolidStreamingMarkdown = (
 					}
 
 					const toRemove = doc.children.slice(toRemoveStart);
-					const toChange = result.addedNodes.slice(0, toRemove.length);
+					const toChange = result.addedNodes;
 
 					for (let i = 0; i < toRemove.length; i++) {
 						const toRemoveNode = toRemove[i];
