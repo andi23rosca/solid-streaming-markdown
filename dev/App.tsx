@@ -2,7 +2,6 @@ import { createSolidStreamingMarkdown, SolidStreamingMarkdown } from "../src";
 import README from "../README.md?raw";
 
 const p = createSolidStreamingMarkdown(README);
-
 const toStream = README;
 
 async function stream() {
@@ -14,9 +13,11 @@ async function stream() {
 	p.append(chunk);
 	await new Promise((resolve) => setTimeout(resolve, 30));
 
-	for (let i = image; i < to; i += 3) {
-		const chunk = toStream.slice(i, i + 3);
-		await new Promise((resolve) => setTimeout(resolve, 30));
+	const step = 10;
+
+	for (let i = image; i < to; i += step) {
+		const chunk = toStream.slice(i, i + step);
+		await new Promise((resolve) => setTimeout(resolve, 70));
 		p.append(chunk);
 	}
 }
