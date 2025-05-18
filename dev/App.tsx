@@ -110,52 +110,144 @@ const createIncrementalParser = (initialMarkdown = "") => {
 	};
 };
 
-const p = createIncrementalParser("Cool ");
+const p = createIncrementalParser("");
 
 const toStream = `
-# Welcome to Markdown Demo
+# Markdown Syntax Showcase
 
-This is a **bold** demonstration of _markdown_ formatting capabilities.
+## Text Formatting
 
-You can create soft breaks in Markdown by adding two spaces at the end of a line.
-This creates a line break without starting a new paragraph.
-It's useful for formatting poetry, addresses, or any content where you want to maintain
-a specific line structure without the extra spacing that comes with paragraphs.
+This is a demonstration of basic text formatting:
+- **Bold text** using double asterisks
+- *Italic text* using single asterisks
+- ***Bold and italic*** combined
+- ~~Strikethrough~~ using double tildes
+- \`inline code\` using backticks
 
-Soft breaks are particularly helpful when you need to control the visual flow of text
-while keeping it all within a single semantic paragraph element.
-This makes your content both visually appealing and semantically correct for screen readers
-and other accessibility tools that might be used to navigate your markdown content.
+## Headings
 
+# H1 Heading
+## H2 Heading
+### H3 Heading
+#### H4 Heading
+##### H5 Heading
+###### H6 Heading
 
+## Lists
 
-## Features
+### Unordered Lists
+* Item 1
+* Item 2
+  * Nested item 2.1
+  * Nested item 2.2
+* Item 3
 
-* Lists are easy to create
-* And they help organize information
-* **Bold** and _italic_ text can be combined for _**emphasis**_
+### Ordered Lists
+1. First item
+2. Second item
+   1. Nested item 2.1
+   2. Nested item 2.2
+3. Third item
 
-### Links and More
+### Task Lists
+- [x] Completed task
+- [ ] Pending task
+- [ ] Another task
 
-Check out [Solid.js](https://www.solidjs.com/) for more information about the framework.
+## Links and Images
 
-> Blockquotes provide a nice way to highlight important information
-> or to quote someone famous.
+[Regular link](https://example.com)
+![Image alt text](https://via.placeholder.com/150)
 
-Code can be included inline with \`backticks\` or in blocks:
+## Blockquotes
 
-\`\`\`js
-function hello() {
-  console.log("Hello, markdown!");
+> Single line blockquote
+>
+> Multi-line blockquote
+> > Nested blockquote
+
+## Code Blocks
+
+\`\`\`javascript
+function example() {
+  console.log("Syntax highlighting");
+  return true;
 }
 \`\`\`
+
+\`\`\`python
+def example():
+    print("Python syntax")
+    return True
+\`\`\`
+
+## Tables
+
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |
+
+| Left-aligned | Center-aligned | Right-aligned |
+|:-------------|:--------------:|--------------:|
+| Left         | Center         | Right         |
+| Text         | Text           | Text          |
+
+## Horizontal Rules
+
+---
+
+***
+
+___
+
+## Footnotes
+
+Here's a sentence with a footnote. [^1]
+
+[^1]: This is the footnote.
+
+## Definition Lists
+
+Term
+: Definition 1
+: Definition 2
+
+## Escaping Characters
+
+\\\* Asterisk
+\\\` Backtick
+\\\# Hash
+
+## Line Breaks
+
+First line
+Second line (with two spaces at end)
+
+First line
+Second line (with backslash)
+
+## HTML Support
+
+<div style="color: blue">
+  This is <b>HTML</b> content
+</div>
+
+## Math Equations (if supported)
+
+Inline math: $E = mc^2$
+
+Block math:
+$$
+\\frac{n!}{k!(n-k)!} = \\binom{n}{k}
+$$
 `;
 
 async function stream() {
 	const to = toStream.length;
-	for (let i = 0; i < to; i += 10) {
-		const chunk = toStream.slice(i, i + 10);
-		await new Promise((resolve) => setTimeout(resolve, 100));
+	for (let i = 0; i < to; i += 3) {
+		const chunk = toStream.slice(i, i + 3);
+		await new Promise((resolve) => setTimeout(resolve, 30));
 		p.append(chunk);
 		// console.log(JSON.stringify(p.doc, null, 2));
 	}
