@@ -5,7 +5,7 @@ import type { Pos } from "src/toastmark/types/node";
 import { ASTNodeRenderer } from "./components/ASTRenderers";
 
 const createIncrementalParser = (initialMarkdown = "") => {
-	const p = new ToastMark(initialMarkdown);
+	const p = new ToastMark(initialMarkdown, { extendedAutolinks: true });
 	const appendPositions: Pos[] = [];
 
 	const [doc, setDoc] = createStore<ASTNode>({
@@ -123,6 +123,7 @@ This is a demonstration of basic text formatting:
 - ***Bold and italic*** combined
 - ~~Strikethrough~~ using double tildes
 - \`inline code\` using backticks
+- autolinks should work https://example.com or test@example.com
 
 ## Headings
 
