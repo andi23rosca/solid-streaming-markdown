@@ -1,6 +1,8 @@
-import { render } from 'solid-js/web'
-import './styles.css'
+import { render } from "solid-js/web";
+import "./styles.css";
+import "./gfm.css";
 
-import App from './App'
+import App from "./App";
 
-render(() => <App />, document.getElementById('root')!)
+// biome-ignore lint/style/noNonNullAssertion: <explanation>
+render(() => <App />, document.getElementById("root")!);
