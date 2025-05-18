@@ -19,21 +19,19 @@ export const AstNodeChildren = (props: { node: ASTNode }): JSX.Element => {
 };
 
 export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
-  const { node } = props;
-
   return (
-    <Switch fallback={<span class="markdown-unknown" data-node={JSON.stringify(node)}>{node.literal}</span>}>
-      <Match when={node.type === "doc"}>
+    <Switch fallback={<span class="markdown-unknown" data-node={JSON.stringify(props.node)}>{props.node.literal}</span>}>
+      <Match when={props.node.type === "doc"}>
         <div class="markdown-doc">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </div>
       </Match>
 
-      <Match when={node.type === "softbreak"}>
+      <Match when={props.node.type === "softbreak"}>
         <br />
       </Match>
 
-      <Match when={node.type === "heading" && (node as HeadingASTNode)}>
+      <Match when={props.node.type === "heading" && (props.node as HeadingASTNode)}>
         {(node) => {
           return (
             <Dynamic
@@ -46,33 +44,33 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         }}
       </Match>
 
-      <Match when={node.type === "paragraph"}>
+      <Match when={props.node.type === "paragraph"}>
         <p class="markdown-paragraph">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </p>
       </Match>
 
-      <Match when={node.type === "text"}>
-        <span class="markdown-text">{node.literal}</span>
+      <Match when={props.node.type === "text"}>
+        <span class="markdown-text">{props.node.literal}</span>
       </Match>
 
-      <Match when={node.type === "strong"}>
+      <Match when={props.node.type === "strong"}>
         <strong class="markdown-strong">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </strong>
       </Match>
 
-      <Match when={node.type === "emph"}>
+      <Match when={props.node.type === "emph"}>
         <em class="markdown-emph">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </em>
       </Match>
 
-      <Match when={node.type === "code"}>
-        <code class="markdown-code">{node.literal}</code>
+      <Match when={props.node.type === "code"}>
+        <code class="markdown-code">{props.node.literal}</code>
       </Match>
 
-      <Match when={node.type === "link" && (node as LinkASTNode)}>
+      <Match when={props.node.type === "link" && (props.node as LinkASTNode)}>
         {(node) => {
           return (
             <a href={node().destination || "#"} class="markdown-link">
@@ -82,7 +80,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         }}
       </Match>
 
-      <Match when={node.type === "image" && (node as LinkASTNode)}>
+      <Match when={props.node.type === "image" && (props.node as LinkASTNode)}>
         {(node) => {
           return (
             <img
@@ -94,7 +92,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         }}
       </Match>
 
-      <Match when={node.type === "list" && (node as ListASTNode)}>
+      <Match when={props.node.type === "list" && (props.node as ListASTNode)}>
         {(node) => {
           return (
             <Dynamic
@@ -107,13 +105,13 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         }}
       </Match>
 
-      <Match when={node.type === "item"}>
+      <Match when={props.node.type === "item"}>
         <li class="markdown-item">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </li>
       </Match>
 
-      <Match when={node.type === "codeBlock" && (node as CodeBlockASTNode)}>
+      <Match when={props.node.type === "codeBlock" && (props.node as CodeBlockASTNode)}>
         {(node) => {
           return (
             <pre class="markdown-code-block">
@@ -125,21 +123,21 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
         }}
       </Match>
 
-      <Match when={node.type === "blockQuote"}>
+      <Match when={props.node.type === "blockQuote"}>
         <blockquote class="markdown-blockquote">
-          <AstNodeChildren node={node} />
+          <AstNodeChildren node={props.node} />
         </blockquote>
       </Match>
 
-      <Match when={node.type === "thematicBreak"}>
+      <Match when={props.node.type === "thematicBreak"}>
         <hr class="markdown-thematic-break" />
       </Match>
 
-      <Match when={node.type === "htmlBlock"}>
-        <div class="markdown-html-block" innerHTML={node.literal || ""} />
+      <Match when={props.node.type === "htmlBlock"}>
+        <div class="markdown-html-block" innerHTML={props.node.literal || ""} />
       </Match>
 
-      <Match when={node.type === "customBlock" && (node as CustomBlockASTNode)}>
+      <Match when={props.node.type === "customBlock" && (props.node as CustomBlockASTNode)}>
         {(node) => {
           return (
             <div class={`markdown-custom-block ${node().info}`}>
@@ -150,7 +148,7 @@ export const ASTNodeRenderer = (props: { node: ASTNode }): JSX.Element => {
       </Match>
 
       <Match
-        when={node.type === "customInline" && (node as CustomInlineASTNode)}
+        when={props.node.type === "customInline" && (props.node as CustomInlineASTNode)}
       >
         {(node) => {
           return (

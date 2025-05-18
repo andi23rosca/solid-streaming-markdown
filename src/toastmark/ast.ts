@@ -1,4 +1,5 @@
 import type { EditResult } from "@t/index";
+import type { Pos } from "./types/node";
 import type {
 	Node,
 	LinkNode,
@@ -125,11 +126,14 @@ export interface ASTResult {
 	};
 }
 
-export function createAST(diff: EditResult[]): ASTResult[] {
+export function createAST(
+	diff: EditResult[],
+	appendPositions: Pos[] = [],
+): ASTResult[] {
 	return diff.map((result) => {
 		const { nodes, removedNodeRange } = result;
 
-		const processNode = (node: Node): ASTNode => {
+		const processNode = (node: Node): ASTNode[] => {
 			const baseNode: BaseASTNode = {
 				id: node.id,
 				type: node.type,
@@ -141,8 +145,74 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 			// Process children recursively
 			let child = node.firstChild;
 			while (child) {
-				baseNode.children.push(processNode(child));
+				baseNode.children.push(...processNode(child));
 				child = child.next;
+			}
+
+			// Split text nodes at append positions
+			if (
+				node.type === "text" &&
+				node.literal &&
+				node.sourcepos &&
+				appendPositions.length > 0
+			) {
+				const [line, col] = node.sourcepos[0];
+				const relevantPositions = appendPositions.filter(
+					(pos) =>
+						pos[0] === line &&
+						pos[1] > col &&
+						pos[1] < col + (node.literal?.length ?? 0),
+				);
+
+				if (relevantPositions.length > 0) {
+					// Sort positions by column
+					relevantPositions.sort((a, b) => a[1] - b[1]);
+
+					// Split the text node into multiple nodes
+					let lastCol = col;
+					const splitNodes: ASTNode[] = [];
+					let remainingText = node.literal;
+
+					for (const pos of relevantPositions) {
+						const splitIndex = pos[1] - col;
+						const firstPart = remainingText.slice(0, splitIndex);
+						const secondPart = remainingText.slice(splitIndex);
+
+						if (firstPart) {
+							splitNodes.push({
+								...baseNode,
+								id: node.id + splitNodes.length,
+								literal: firstPart,
+								sourcepos: [
+									[line, lastCol],
+									[line, pos[1] - 1],
+								],
+								children: [],
+							});
+						}
+
+						lastCol = pos[1];
+						remainingText = secondPart;
+					}
+
+					if (remainingText) {
+						splitNodes.push({
+							...baseNode,
+							id: node.id + splitNodes.length,
+							literal: remainingText,
+							sourcepos: [
+								[line, lastCol],
+								[line, lastCol + remainingText.length - 1],
+							],
+							children: [],
+						});
+					}
+
+					// If we have split nodes, return the first one
+					if (splitNodes.length > 0) {
+						return splitNodes;
+					}
+				}
 			}
 
 			// Add type-specific properties
@@ -157,7 +227,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						title: linkNode.title,
 						extendedAutolink: linkNode.extendedAutolink,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "code": {
 					const codeNode = node as CodeNode;
@@ -166,7 +236,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						type: "code",
 						tickCount: codeNode.tickCount,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "heading": {
 					const headingNode = node as HeadingNode;
@@ -176,7 +246,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						level: headingNode.level,
 						headingType: headingNode.headingType,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "list":
 				case "item": {
@@ -186,7 +256,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						type: node.type as "list" | "item",
 						listData: listNode.listData,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "codeBlock": {
 					const codeBlockNode = node as CodeBlockNode;
@@ -200,7 +270,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						info: codeBlockNode.info,
 						infoPadding: codeBlockNode.infoPadding,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "table": {
 					const tableNode = node as TableNode;
@@ -209,7 +279,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						type: "table",
 						columns: tableNode.columns,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "tableCell": {
 					const tableCellNode = node as TableCellNode;
@@ -222,7 +292,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						paddingRight: tableCellNode.paddingRight,
 						ignored: tableCellNode.ignored,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "refDef": {
 					const refDefNode = node as RefDefNode;
@@ -233,7 +303,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						dest: refDefNode.dest,
 						label: refDefNode.label,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "customBlock": {
 					const customBlockNode = node as CustomBlockNode;
@@ -244,7 +314,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						offset: customBlockNode.offset,
 						info: customBlockNode.info,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "htmlBlock": {
 					const htmlBlockNode = node as HtmlBlockNode;
@@ -253,7 +323,7 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						type: "htmlBlock",
 						htmlBlockType: htmlBlockNode.htmlBlockType,
 					};
-					return astNode;
+					return [astNode];
 				}
 				case "customInline": {
 					const customInlineNode = node as CustomInlineNode;
@@ -262,15 +332,15 @@ export function createAST(diff: EditResult[]): ASTResult[] {
 						type: "customInline",
 						info: customInlineNode.info,
 					};
-					return astNode;
+					return [astNode];
 				}
 				default:
-					return baseNode;
+					return [baseNode];
 			}
 		};
 
 		return {
-			addedNodes: nodes.map(processNode),
+			addedNodes: nodes.flatMap(processNode),
 			removedRange: removedNodeRange ?? undefined,
 		};
 	});

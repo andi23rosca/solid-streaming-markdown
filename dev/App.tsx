@@ -1,95 +1,116 @@
 import { ToastMark } from "src/toastmark/toastmark";
-import {
-  createAST,
-  type ASTNode,
-  type ASTResult,
-} from "src/toastmark/ast";
+import { createAST, type ASTNode, type ASTResult } from "src/toastmark/ast";
 import { createStore, produce, reconcile } from "solid-js/store";
 import type { Pos } from "src/toastmark/types/node";
 import { ASTNodeRenderer } from "./components/ASTRenderers";
-import { batch } from "solid-js";
-
-// Helper function to compare nodes recursively
-const areNodesEqual = (node1: ASTNode, node2: ASTNode): boolean => {
-  if (!node1 || !node2) return false;
-  if (node1.type !== node2.type) return false;
-  if (node1.literal !== node2.literal) return false;
-  if (node1.children?.length !== node2.children?.length) return false;
-
-  if (node1.children && node2.children) {
-    return node1.children.every((child1, index) => {
-      const child2 = node2.children[index];
-      return child2 ? areNodesEqual(child1, child2) : false;
-    });
-  }
-
-  return true;
-};
 
 const createIncrementalParser = (initialMarkdown = "") => {
-  const p = new ToastMark(initialMarkdown);
+	const p = new ToastMark(initialMarkdown);
+	const appendPositions: Pos[] = [];
 
-  const [doc, setDoc] = createStore<ASTNode>({
-    type: "doc",
-    id: 0,
-    literal: null,
-    children: [],
-  });
+	const [doc, setDoc] = createStore<ASTNode>({
+		type: "doc",
+		id: 0,
+		literal: null,
+		children: [],
+	});
 
-  const updateDoc = (astResults: ASTResult[]) => {
-    batch(() => {
-      // console.log(astResults);
-      for (const result of astResults) {
-        const [start, end] = result.removedRange?.id || [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+	const morphNode = (oldNode: ASTNode, newNode: ASTNode) => {
+		const children = oldNode.children;
+		Object.assign(oldNode, newNode);
+		oldNode.children = children;
 
-        let oldChildIndex = 0;
-        let addedNodesIndex = 0;
-        for (const node of doc.children) {
-          if (node.id < start) {
-            oldChildIndex++;
-            continue;
-          }
-          const newNode = result.addedNodes[addedNodesIndex];
-          addedNodesIndex++;
-          if (!newNode) {
-            oldChildIndex++;
-            continue;
-          }
-          if (node.id <= end) {
-            setDoc("children", oldChildIndex, reconcile(newNode))
-            oldChildIndex++;
-            continue;
-          }
-          setDoc("children", oldChildIndex, newNode);
-          oldChildIndex++;
-        }
+		for (let i = 0; i < children.length; i++) {
+			const oldChild = children[i];
+			const newChild = newNode.children[i];
 
-        if (addedNodesIndex < result.addedNodes.length) {
-          setDoc("children", c => [...c, ...result.addedNodes.slice(addedNodesIndex)])
-        }
-      }
-    })
-  };
+			if (oldChild && !newChild) {
+				oldNode.children.splice(i, oldNode.children.length - i);
+				break;
+			}
+			if (!oldChild && newChild) {
+				oldNode.children.push(newChild);
+				break;
+			}
+			if (!oldChild || !newChild) {
+				continue;
+			}
 
-  const append = (markdown: string) => {
-    const lastPosition = [
-      p.lineTexts.length,
-      (p.lineTexts[p.lineTexts.length - 1]?.length || 0) + 1,
-    ] as Pos;
-    const diff = p.editMarkdown(lastPosition, lastPosition, markdown);
-    const astResults = createAST(diff);
-    updateDoc(astResults);
-    // console.log(doc);
-    return astResults;
-  };
+			morphNode(oldChild, newChild);
+		}
 
-  return {
-    append,
-    doc,
-  };
+		const remaining = newNode.children.slice(oldNode.children.length);
+		oldNode.children.push(...remaining);
+	};
+
+	const updateDoc = (astResults: ASTResult[]) => {
+		setDoc(
+			produce((doc) => {
+				for (const result of astResults) {
+					if (!doc.children.length || !result.removedRange) {
+						doc.children.push(...result.addedNodes);
+						continue;
+					}
+
+					const [start] = result.removedRange.id;
+
+					const toRemoveStart = doc.children.findIndex((c) => c.id === start);
+					if (toRemoveStart === -1) {
+						doc.children.push(...result.addedNodes);
+						continue;
+					}
+
+					const toRemove = doc.children.slice(toRemoveStart);
+					const toChange = result.addedNodes.slice(0, toRemove.length);
+
+					for (let i = 0; i < toRemove.length; i++) {
+						const toRemoveNode = toRemove[i];
+						const toChangeNode = toChange[i];
+						if (!toRemoveNode && toChangeNode) {
+							doc.children[toRemoveStart + i] = toChangeNode;
+							continue;
+						}
+						if (toRemoveNode && !toChangeNode) {
+							doc.children.splice(toRemoveStart + i, 1);
+							continue;
+						}
+						if (!toRemoveNode || !toChangeNode) {
+							continue;
+						}
+
+						morphNode(toRemoveNode, toChangeNode);
+					}
+
+					const remaining = toChange.slice(toRemove.length);
+					doc.children.push(...remaining);
+				}
+			}),
+		);
+	};
+
+	const append = (markdown: string) => {
+		const lastPosition = [
+			p.lineTexts.length,
+			(p.lineTexts[p.lineTexts.length - 1]?.length || 0) + 1,
+		] as Pos;
+		appendPositions.push(lastPosition);
+		const diff = p.editMarkdown(lastPosition, lastPosition, markdown);
+		const astResults = createAST(diff, appendPositions);
+		updateDoc(astResults);
+		// console.log(doc);
+		return astResults;
+	};
+
+	append(initialMarkdown);
+
+	return {
+		append,
+		doc,
+		setDoc,
+	};
 };
 
-const p = createIncrementalParser("# Markdown streaming\n");
+const p = createIncrementalParser("Cool ");
 
 const toStream = `
 # Welcome to Markdown Demo
@@ -100,6 +121,7 @@ You can create soft breaks in Markdown by adding two spaces at the end of a line
 This creates a line break without starting a new paragraph.
 It's useful for formatting poetry, addresses, or any content where you want to maintain
 a specific line structure without the extra spacing that comes with paragraphs.
+
 Soft breaks are particularly helpful when you need to control the visual flow of text
 while keeping it all within a single semantic paragraph element.
 This makes your content both visually appealing and semantically correct for screen readers
@@ -129,29 +151,28 @@ function hello() {
 \`\`\`
 `;
 
-// const toStream = "cool"
-
 async function stream() {
-  for (let i = 0; i < toStream.length; i += 10) {
-    const chunk = toStream.slice(i, i + 10);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    p.append(chunk);
-    // console.log(JSON.stringify(p.doc, null, 2));
-  }
+	const to = toStream.length;
+	for (let i = 0; i < to; i += 10) {
+		const chunk = toStream.slice(i, i + 10);
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		p.append(chunk);
+		// console.log(JSON.stringify(p.doc, null, 2));
+	}
 }
 
 const TreeView = () => {
-  return (
-    <div class="markdown-tree-view">
-      <button type="button" onClick={() => stream()}>
-        Stream
-      </button>
-      {/* <h1>Markdown Tree View</h1> */}
-      <div class="markdown-content">
-        <ASTNodeRenderer node={p.doc} />
-      </div>
-    </div>
-  );
+	return (
+		<div class="markdown-tree-view">
+			<button type="button" onClick={() => stream()}>
+				Stream
+			</button>
+			{/* <h1>Markdown Tree View</h1> */}
+			<div class="markdown-content">
+				<ASTNodeRenderer node={p.doc} />
+			</div>
+		</div>
+	);
 };
 
 export default TreeView;
