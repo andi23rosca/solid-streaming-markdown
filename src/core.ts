@@ -7,9 +7,28 @@ import {
 	type DocASTNode,
 } from "./toastmark/ast";
 import { createStore, produce } from "solid-js/store";
+import type { ParserOptions } from "@t/parser";
 
-export const createIncrementalParser = (initialMarkdown = "") => {
-	let parser = new ToastMark("", { extendedAutolinks: true });
+/**
+ * Creates a streaming markdown parser that can be used to render markdown
+ * incrementally.
+ *
+ * @param initialMarkdown - The initial markdown to parse.
+ * @param options - The options to pass to the parser.
+ * @returns A streaming markdown parser.
+ *
+ * @example
+ * ```ts
+ * const parser = createSolidStreamingMarkdown("# Hello");
+ * parser.append(", world!");
+ * parser.append("\nHow's it going?");
+ * ```
+ */
+export const createSolidStreamingMarkdown = (
+	initialMarkdown = "",
+	options: Partial<ParserOptions> = {},
+) => {
+	let parser = new ToastMark("", { extendedAutolinks: true, ...options });
 	const appendPositions: Pos[] = [];
 
 	const [doc, setDoc] = createStore<DocASTNode>({
@@ -107,10 +126,24 @@ export const createIncrementalParser = (initialMarkdown = "") => {
 
 	append(initialMarkdown);
 
+	const unsafe = {
+		parser,
+		setDoc,
+	};
+
 	return {
+		/**
+		 * Resets the markdown streaming parser to a clean slate.
+		 *
+		 * Useful when you want to reuse the instance but have to
+		 * render a new markdown doc instead of appending to an existing one.
+		 *
+		 * @example `reset()`
+		 */
 		reset: () => {
 			parser = new ToastMark("", { extendedAutolinks: true });
 			appendPositions.length = 0;
+			unsafe.parser = parser;
 			setDoc({
 				type: "doc",
 				id: 0,
@@ -118,7 +151,33 @@ export const createIncrementalParser = (initialMarkdown = "") => {
 				children: [],
 			});
 		},
+		/**
+		 * Main function for adding streamed markdown to the parser and
+		 * triggering incremental compilations
+		 *
+		 * @returns The result of the incremental compilation as a list of nodes
+		 * to delete and nodes to append. Ignore unless you know you need it.
+		 *
+		 * @example `append("# Some chunk of markdown")`
+		 */
 		append,
+		/**
+		 * The markdown document root.
+		 *
+		 * Stored as a solid-js store so be careful with destructuring / reactivity.
+		 */
 		doc,
+
+		/**
+		 * Exposes the internal parser and setter for the doc store.
+		 * Only use if you know what you're doing.
+		 *
+		 * See the `append` and `updateDoc` functions in the source code (in `core.ts`)
+		 * for reference on how to parse and transform diffs into a markdown tree.
+		 *
+		 * With access to the `parser` and `setDoc` you can implement any custom flow instead of
+		 * the default one.
+		 */
+		unsafe,
 	};
 };
